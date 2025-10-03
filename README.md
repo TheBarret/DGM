@@ -42,7 +42,7 @@ Seed Decomposition (Base L+1)
 > ```
 
 ### Test Run
-> paramaters: `initial_count=25, offspring_count=9`
+> parameters: `Family(initial_count=25, offspring_count=9)`
 
 ```py
 python run.py
