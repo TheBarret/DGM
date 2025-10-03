@@ -114,6 +114,15 @@ Genome(Seed=2055,Fs=16,L=8,Base=9)
 >         new_fields[i] = (parentB.fields[i] & rng_mask) | (parentA.fields[i] & ~rng_mask)
 > ```
 
+### Fitness Metrics
+> A control and sorting feature, or as pressure gate in selection process.  
+> ```py
+> sum(self.blocks) → counts the total number of 1s across all blocks.
+> _analyze_block_patterns() → counts transitions between consecutive bits (1→0 or 0→1).
+> ```
+> High fitness → many 1s and/or diverse block patterns.  
+> Low fitness → mostly 0s or uniform blocks.  
+
 ### Genetic Distance Metrics
 Dendrogram-based family trees
 ```py
