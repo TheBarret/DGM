@@ -41,6 +41,56 @@ Seed Decomposition (Base L+1)
 > next_bitmask() → evolves via linear congruential step
 > ```
 
+### Test Run
+> paramaters: `initial_count=25, offspring_count=9`
+
+```py
+python run.py
+* * * * Offspring Data:
+  Pool       : 34
+
+Genome(Seed=4694,Fs=16,L=8,Base=9)
+  Blocks     : 32 | [5, 8, 3, 6]
+  Fields     : [31154, 17905, 15227, 9711]
+  Bitmask    : 0b1111
+  Fitness    : 34
+  Lineage    :
+    Genome(30) (G2) ← Genome(26) (G1) ← Genome(19) (G0) + Genome(6) (G0) + Genome(25) (G0)
+
+Genome(Seed=4737,Fs=16,L=8,Base=9)
+  Blocks     : 32 | [3, 4, 4, 6]
+  Fields     : [57507, 13904, 8095, 36171]
+  Bitmask    : 0b110
+  Fitness    : 34
+  Lineage    :
+    Genome(31) (G3) ← Genome(18) (G0) + Genome(28) (G2) ← Genome(9) (G0) + Genome(26) (G1) ← Genome(19) (G0) + Genome(6) (G0)
+
+Genome(Seed=16,Fs=16,L=8,Base=9)
+  Blocks     : 32 | [7, 1, 0, 0]
+  Fields     : [62850, 28729, 4087, 22610]
+  Bitmask    : 0b1101
+  Fitness    : 13
+  Lineage    :
+    Genome(32) (G2) ← Genome(23) (G0) + Genome(29) (G1) ← Genome(22) (G0) + Genome(12) (G0)
+
+Genome(Seed=724,Fs=16,L=8,Base=9)
+  Blocks     : 32 | [4, 8, 8, 0]
+  Fields     : [32564, 49873, 42655, 6492]
+  Bitmask    : 0b100
+  Fitness    : 27
+  Lineage    :
+    Genome(33) (G1) ← Genome(5) (G0) + Genome(21) (G0)
+
+Genome(Seed=2055,Fs=16,L=8,Base=9)
+  Blocks     : 32 | [3, 3, 7, 2]
+  Fields     : [62548, 31005, 27891, 61250]
+  Bitmask    : 0b100
+  Fitness    : 29
+  Lineage    :
+    Genome(34) (G2) ← Genome(13) (G0) + Genome(29) (G1) ← Genome(22) (G0) + Genome(12) (G0)
+  ```
+
+
 ### Branch Code / Inheritance Modifier
 > The `branch_code` is an optional integer passed to `crossover()` or `clone()` that modifies the random mask generation,  
 > creating minor variations in inheritance patterns while keeping the genome deterministic:
