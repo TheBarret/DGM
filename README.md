@@ -28,8 +28,7 @@ Seed Decomposition (Base L+1)
 >```
 
 ### Field Generation  
->Length: 16  
->Determinism: SHA256  
+> Using `SHA256` to retain determinism.  
 >```py
 >fields = extract_16bit_chunks(SHA256(seed))
 >```
