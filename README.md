@@ -131,12 +131,29 @@ Genome(Seed=2055,Fs=16,L=8,Base=9)
 > - Ensures lineage diversity for dendrograms and family trees.  
 
 ### Cloning / Crossover Logic
-> Bitmask-driven Inheritance
+> The bitmask driven inheritance uses a mutation bit that toggles an inversion pattern.
 > ```py
-> for i in fields:
->     if bitmask & (1 << i):
->         new_fields[i] = (parentA.fields[i] & rng_mask) | (parentB.fields[i] & ~rng_mask)
->     else:
->         new_fields[i] = (parentB.fields[i] & rng_mask) | (parentA.fields[i] & ~rng_mask)
+>     def crossover(self, other, branch_code=0):
+>        bitmask     = self.next_bitmask()
+>        mut_self     = (self.fields[-1] >> (self.field_size - 1)) & 1
+>        mut_other    = (other.fields[-1] >> (self.field_size - 1)) & 1
+>        mutation    = mut_self ^ mut_other
+>        if mutation:
+>            bitmask = ~bitmask & 0b1111
+>        rng = random.Random(self.seed + other.seed + bitmask + branch_code)
+>        
+>        new_fields = []
+>        for i in range(4):
+>            mask = rng.getrandbits(self.field_size)
+>            if bitmask & (1 << i):
+>                # inherit self with mask + mutation_bit
+>                new_fields.append((self.fields[i] & mask) | (other.fields[i] & ~mask))
+>            else:
+>                # inherit spousse with mask + mutation_bit
+>                new_fields.append((other.fields[i] & mask) | (self.fields[i] & ~mask))
+>        new_seed = self._fields_to_seed(new_fields)
+>        child = Genome(seed=new_seed, L=self.L, field_size=self.field_size)
+>        child.fields = new_fields
+>        return child
 > ```
 
