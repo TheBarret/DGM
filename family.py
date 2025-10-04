@@ -1,97 +1,148 @@
 import random
-import hashlib
 from collections import defaultdict
-from typing import Iterable, Tuple, Optional
+from typing import Iterable, Optional, Union
 
 from genome import Genome
-        
-class Family:
-    def __init__(self):
-        self._next_instance_id = 1
-        self.members: dict[int, Genome] = {}            # instance_id -> Genome
-        self.lineage: dict[int, dict] = {}              # instance_id -> metadata
-        self.by_canonical: defaultdict = defaultdict(list)  # canonical_id -> [instance_id...]
 
-    def add_member(self, genome: Genome, parents: Iterable = (), branch_code: int = 0, generation: int = 0) -> int:
-        # If genome already added, return its existing instance id
-        if getattr(genome, "instance_id", None) is not None and genome.instance_id in self.members:
+
+class Family:
+    """
+    Family class manages genomes, their lineage, and canonical grouping.
+
+    Responsibilities:
+    - Store all genomes with unique instance IDs
+    - Track parentage and generation
+    - Provide controlled reproduction (pair)
+    - Allow ancestry inspection
+    """
+
+    def __init__(self):
+        self._next_instance_id: int = 1
+        self.members: dict[int, Genome] = {}                 # instance_id -> Genome
+        self.lineage: dict[int, dict] = {}                   # instance_id -> metadata
+        self.by_canonical: defaultdict[int, list[int]] = defaultdict(list)  # canonical_id -> [instance_ids]
+
+    def add_member(self, genome: Genome, parents: Iterable[Union[int, Genome]] = (),
+                   branch_code: int = 0,generation: int = 0) -> int:
+        """
+        Add a genome to the family, with optional parents and metadata.
+        Returns the assigned instance ID.
+        """
+
+        # If genome already tracked, reuse its ID
+        if getattr(genome, "instance_id", None) in self.members:
             return genome.instance_id
 
-        # Ensure canonical_id exists (Genome should already provide it)
+        # Ensure canonical ID exists
         if not hasattr(genome, "canonical_id"):
             genome.canonical_id = genome._compute_canonical_id()
 
-        instance_id = self._next_instance_id
-        self._next_instance_id += 1
-
+        instance_id = self._allocate_instance_id()
         genome.instance_id = instance_id
+
+        # Store
         self.members[instance_id] = genome
         self.by_canonical[genome.canonical_id].append(instance_id)
 
-        # resolve parents: allow passing Genome objects or instance ids
-        resolved_parents = []
-        for p in parents:
-            if p is None:
-                continue
-            if isinstance(p, int):
-                resolved_parents.append(p)
-            elif hasattr(p, "instance_id") and p.instance_id in self.members:
-                resolved_parents.append(p.instance_id)
-            else:
-                # if parent Genome object not yet in family, add it first (generation guessed)
-                resolved_parents.append(self.add_member(p, generation=max(0, generation - 1)))
+        # Resolve parents
+        resolved_parents = self._resolve_parents(parents, generation)
 
+        # Record lineage metadata
         self.lineage[instance_id] = {
             "parents": tuple(resolved_parents),
             "canonical": genome.canonical_id,
             "bitmask": getattr(genome, "bitmask_state", 0),
             "branch_code": branch_code,
-            "generation": generation
+            "generation": generation,
         }
+
         return instance_id
 
-    def mate(self, parent_a: Genome, parent_b: Genome, branch_id: int = 0) -> Genome:
-        # produce child genome
-        child = parent_a.crossover(parent_b, branch_code=branch_id)
+    def pair(self, parent_a: Genome, parent_b: Genome, branch_code: int = 0) -> Genome:
+        """
+        Cross two parents into a child genome, register it into the family.
+        """
+        child = parent_a.crossover(parent_b, branch_code=branch_code)
 
-        # determine parent generations (0 if unknown)
-        gen_a = self.lineage.get(getattr(parent_a, "instance_id", None), {}).get("generation", 0)
-        gen_b = self.lineage.get(getattr(parent_b, "instance_id", None), {}).get("generation", 0)
-        gen = max(gen_a, gen_b) + 1
+        # Generation = max parent gen + 1
+        gen_a = self._get_generation(parent_a)
+        gen_b = self._get_generation(parent_b)
+        generation = max(gen_a, gen_b) + 1
 
-        # add child and return child object (family metadata stored)
-        self.add_member(child, parents=(parent_a, parent_b), branch_code=branch_id, generation=gen)
+        self.add_member(child, parents=(parent_a, parent_b), branch_code=branch_code, generation=generation)
         return child
 
-    def create_family(self, initial_count: int = 4, offspring_count: int = 10):
-        members_list = []
-        for _ in range(initial_count):
+    def create_family(self, founders: int = 4, offspring: int = 10) -> list[Genome]:
+        """
+        Create an initial family tree with N founders and M offspring.
+        """
+        members: list[Genome] = []
+
+        # Founders
+        for _ in range(founders):
             g = Genome(seed=random.randint(0, 512))
             self.add_member(g, generation=0)
-            members_list.append(g)
+            members.append(g)
 
-        for _ in range(offspring_count):
-            p1, p2 = random.sample(members_list, 2)
-            child = self.mate(p1, p2)
-            members_list.append(child)
-        return members_list
+        # Offspring
+        for _ in range(offspring):
+            p1, p2 = random.sample(members, 2)
+            child = self.pair(p1, p2)
+            members.append(child)
 
-    def ancestry(self, genome_or_id, _depth_limit: int = 50) -> str:
-        # accept instance id or Genome object
-        gid = genome_or_id if isinstance(genome_or_id, int) else getattr(genome_or_id, "instance_id", None)
-        if gid is None or gid not in self.lineage:
-            return " ? "
+        return members
 
-        # safe recursion with simple depth guard
-        def _recurse(gid_inner, depth):
+    def ancestry(self, genome_or_id: Union[int, Genome], _depth_limit: int = 50) -> str:
+        """
+        Return a human-readable ancestry string for a genome.
+        """
+        gid = self._to_instance_id(genome_or_id)
+        if gid not in self.lineage:
+            return "External"
+
+        def _recurse(gid_inner: int, depth: int) -> str:
             if depth > _depth_limit:
                 return "… (depth limit)"
-            meta = self.lineage.get(gid_inner)
-            if not meta:
-                return " ? "
-            if not meta["parents"]:
-                return f"Genome({gid_inner}) (G{meta['generation']})"
+            meta = self.lineage.get(gid_inner, {})
+            if not meta.get("parents"):
+                return f"Genome({gid_inner}) (G{meta.get('generation', 0)})"
             parents_str = " + ".join(_recurse(p, depth + 1) for p in meta["parents"])
-            return f"Genome({gid_inner}) (G{meta['generation']}) ← {parents_str}"
+            return f"Genome({gid_inner}) (G{meta.get('generation', 0)}) ← {parents_str}"
 
         return _recurse(gid, 0)
+
+    def _allocate_instance_id(self) -> int:
+        iid = self._next_instance_id
+        self._next_instance_id += 1
+        return iid
+
+    def _resolve_parents(self, parents: Iterable[Union[int, Genome]], child_generation: int) -> list[int]:
+        """
+        Normalize parents into instance IDs, auto-adding genomes if needed.
+        """
+        resolved = []
+        for p in parents:
+            if p is None:
+                continue
+            if isinstance(p, int):
+                resolved.append(p)
+            elif isinstance(p, Genome):
+                if getattr(p, "instance_id", None) not in self.members:
+                    resolved.append(self.add_member(p, generation=max(0, child_generation - 1)))
+                else:
+                    resolved.append(p.instance_id)
+        return resolved
+
+    def _to_instance_id(self, genome_or_id: Union[int, Genome]) -> Optional[int]:
+        """
+        Convert a Genome or int into a valid instance ID (if possible).
+        """
+        if isinstance(genome_or_id, int):
+            return genome_or_id
+        return getattr(genome_or_id, "instance_id", None)
+
+    def _get_generation(self, genome: Genome) -> int:
+        """
+        Fetch generation from lineage, fallback to 0.
+        """
+        return self.lineage.get(getattr(genome, "instance_id", None), {}).get("generation", 0)
