@@ -69,7 +69,7 @@ The seed is expressed in base (L+1) integer that encodes 4 parameters.
 
 ### Test Run
 
-Our fitness function:  
+Fitness function:  
 ```py
 def fitness_default(self, p: Phenotype) -> float:
     f_social = self.fitness_social(p)
