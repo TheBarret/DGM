@@ -68,54 +68,54 @@ The seed is expressed in base (L+1) integer that encodes 4 parameters.
 > Mutation bit, is the last bit of the last field (fields[-1]) `XOR → Inverted Bitmask`.  
 
 ### Test Run
-> parameters: `Family(initial_count=25, offspring_count=9)`
 
+Our fitness function:  
 ```py
-python run.py
-* * * * Offspring Data:
-  Pool       : 34
+def fitness_default(self, p: Phenotype) -> float:
+    f_social = self.fitness_social(p)
+    f_cautious = self.fitness_cautious(p)
+    f_aggressive = self.fitness_aggressive(p)
+    val = 0.45 * f_social + 0.45 * f_cautious - 0.25 * f_aggressive
+    balance_penalty = abs(f_social - f_cautious) * 0.2
+    val -= balance_penalty
+    return max(0.0, min(1.0, val))
+```
 
-Genome(Seed=4694,Fs=16,L=8,Base=9)
-  Blocks     : 32 | [5, 8, 3, 6]
-  Fields     : [31154, 17905, 15227, 9711]
-  Bitmask    : 0b1111
-  Fitness    : 34
-  Lineage    :
-    Genome(30) (G2) ← Genome(26) (G1) ← Genome(19) (G0) + Genome(6) (G0) + Genome(25) (G0)
+Output:
+```py
+pop = Population(population_size=256)
+pop.run_generations(num_generations=64, fitness_func=pop.fitness_default)
 
-Genome(Seed=4737,Fs=16,L=8,Base=9)
-  Blocks     : 32 | [3, 4, 4, 6]
-  Fields     : [57507, 13904, 8095, 36171]
-  Bitmask    : 0b110
-  Fitness    : 34
-  Lineage    :
-    Genome(31) (G3) ← Genome(18) (G0) + Genome(28) (G2) ← Genome(9) (G0) + Genome(26) (G1) ← Genome(19) (G0) + Genome(6) (G0)
+* * * Population
+* creating family cluster...
+  selection: 49 | 66 = fitness 14.0
+  selection: 6091 | 3435 = fitness 30.0
+  selection: 1456 | 2001 = fitness 29.0
+  selection: 5093 | 5543 = fitness 35.0
+  selection: 5615 | 5958 = fitness 29.0
+  selection: 3229 | 3369 = fitness 33.0
+  selection: 4824 | 5131 = fitness 23.5
+  ...
+* creating family statistics...
+Trait                Min     Mean      Max
+------------------------------------------
+polarity            0.00     0.48     1.00
+mood                1.00     1.00     1.00
+base_size           0.02     0.54     0.75
+color_index        67.00   192.98   255.00
+pattern_id          0.00     2.28     3.00
+hair                0.00     0.56     1.00
+speed               0.64     0.91     0.94
+endurance           0.44     0.47     0.50
+strength            0.88     0.95     1.00
+lifespan           10.00    50.62    99.00
+fertility           0.14     0.50     1.00
+antagonism          0.00     0.75     3.00
+```
 
-Genome(Seed=16,Fs=16,L=8,Base=9)
-  Blocks     : 32 | [7, 1, 0, 0]
-  Fields     : [62850, 28729, 4087, 22610]
-  Bitmask    : 0b1101
-  Fitness    : 13
-  Lineage    :
-    Genome(32) (G2) ← Genome(23) (G0) + Genome(29) (G1) ← Genome(22) (G0) + Genome(12) (G0)
-
-Genome(Seed=724,Fs=16,L=8,Base=9)
-  Blocks     : 32 | [4, 8, 8, 0]
-  Fields     : [32564, 49873, 42655, 6492]
-  Bitmask    : 0b100
-  Fitness    : 27
-  Lineage    :
-    Genome(33) (G1) ← Genome(5) (G0) + Genome(21) (G0)
-
-Genome(Seed=2055,Fs=16,L=8,Base=9)
-  Blocks     : 32 | [3, 3, 7, 2]
-  Fields     : [62548, 31005, 27891, 61250]
-  Bitmask    : 0b100
-  Fitness    : 29
-  Lineage    :
-    Genome(34) (G2) ← Genome(13) (G0) + Genome(29) (G1) ← Genome(22) (G0) + Genome(12) (G0)
-  ```
-
+Result:  
+<img width="500" src="https://github.com/user-attachments/assets/10d66497-baf4-4b6b-87d1-fc72e01359aa" />
+<img width="500" src="https://github.com/user-attachments/assets/96763aea-0baa-4a0f-a066-411d02021722" />
 
 ### Branch Code / Inheritance Modifier
 > The `branch_code` is an optional integer passed to `crossover()` or `clone()` that modifies the random mask generation,  
@@ -156,4 +156,5 @@ Genome(Seed=2055,Fs=16,L=8,Base=9)
 >        child.fields = new_fields
 >        return child
 > ```
+
 
