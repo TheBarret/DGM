@@ -4,6 +4,7 @@ Deterministic Genome Model
 A deterministic binary genome model to obtain genetic information in binary with lineage mechanics.  
 
 ### Foundation
+
 ```csv
 Deterministic          : Same seed → identical genome every run.  
 Bijective              : Unique tuple (S₁, S₂, S₃, S₄) ↔ unique seed.  
@@ -12,15 +13,45 @@ Family Matrices        : Fields enable distance metrics, clustering, and tree co
 Inheritance Modifier   : Optional branch code control  
 ```
 
->```py
->Seed → Blocks → Bit Sums → Fields → Bitmask → Family[...]
->```
+### Pipeline 
 
-Seed Decomposition (Base L+1)
+<img width="500" src="https://github.com/user-attachments/assets/a492be9a-18a7-4151-8ba8-c3ef7b242ff1" />
+
+```py
+Seed → Blocks → Bit Sums → Fields → Bitmask → Family[...]
+```
+
+### Fitness Metrics
+> A control and sorting feature, or as pressure gate in selection process.  
+> ```py
+> sum(self.blocks) → counts the total number of 1s across all blocks.
+> _analyze_block_patterns() → counts transitions between consecutive bits (1→0 or 0→1).
+> ```
+> High fitness → many 1s and/or diverse block patterns.  
+> Low fitness → mostly 0s or uniform blocks.  
+
+### Genetic Distance Metrics
+Dendrogram-based family trees
+```py
+d(Gᵢ, Gⱼ) = Σ |fieldsᵢ - fieldsⱼ|
+```
+<img width="850" alt="Family Tree" src="https://github.com/user-attachments/assets/75e8f07e-afef-4289-82a0-9f2b60e6a93e" />
+
+
+
+### Seed Decomposition (Base L+1) 
+>- L = 8 → block length (number of bits per block).
+>- base = L+1 = 9 → mathematical base for seed decomposition.
+>- max_seed = base⁴ - 1 → maximum seed value.
+>- seed = chosen number in [0, max_seed].
+
+The seed is expressed in base (L+1) integer that encodes 4 parameters.  
 >```py
 >seed = S₁ + (L+1)·S₂ + (L+1)²·S₃ + (L+1)³·S₄
 >where Sᵢ ∈ [0, L] (block sums)
 >```
+> 
+
 
 ### Block Generation
 >```py
@@ -112,23 +143,4 @@ Genome(Seed=2055,Fs=16,L=8,Base=9)
 >     else:
 >         new_fields[i] = (parentB.fields[i] & rng_mask) | (parentA.fields[i] & ~rng_mask)
 > ```
-
-### Fitness Metrics
-> A control and sorting feature, or as pressure gate in selection process.  
-> ```py
-> sum(self.blocks) → counts the total number of 1s across all blocks.
-> _analyze_block_patterns() → counts transitions between consecutive bits (1→0 or 0→1).
-> ```
-> High fitness → many 1s and/or diverse block patterns.  
-> Low fitness → mostly 0s or uniform blocks.  
-
-### Genetic Distance Metrics
-Dendrogram-based family trees
-```py
-d(Gᵢ, Gⱼ) = Σ |fieldsᵢ - fieldsⱼ|
-```
-<img width="850" alt="Family Tree" src="https://github.com/user-attachments/assets/75e8f07e-afef-4289-82a0-9f2b60e6a93e" />
-
-
-
 
