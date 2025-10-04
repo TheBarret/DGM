@@ -15,8 +15,6 @@ Inheritance Modifier   : Optional branch code control
 
 ### Pipeline 
 
-<img width="500" src="https://github.com/user-attachments/assets/a492be9a-18a7-4151-8ba8-c3ef7b242ff1" />
-
 ```py
 Seed → Blocks → Bit Sums → Fields → Bitmask → Family[...]
 ```
