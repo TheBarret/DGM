@@ -35,14 +35,11 @@ d(Gᵢ, Gⱼ) = Σ |fieldsᵢ - fieldsⱼ|
 ```
 <img width="850" alt="Family Tree" src="https://github.com/user-attachments/assets/75e8f07e-afef-4289-82a0-9f2b60e6a93e" />
 
-
-
 ### Seed Decomposition (Base L+1) 
 >- L = 8 → block length (number of bits per block).
 >- base = L+1 = 9 → mathematical base for seed decomposition.
 >- max_seed = base⁴ - 1 → maximum seed value.
 >- seed = chosen number in [0, max_seed].
-
 The seed is expressed in base (L+1) integer that encodes 4 parameters.  
 >```py
 >seed = S₁ + (L+1)·S₂ + (L+1)²·S₃ + (L+1)³·S₄
@@ -68,6 +65,7 @@ The seed is expressed in base (L+1) integer that encodes 4 parameters.
 > bitmask_state = sum(f & 0b1111 for f in fields) & 0b1111  
 > next_bitmask() → evolves via linear congruential step
 > ```
+> Mutation bit, is the last bit of the last field (fields[-1]) `XOR → Inverted Bitmask`.  
 
 ### Test Run
 > parameters: `Family(initial_count=25, offspring_count=9)`
